@@ -8,7 +8,8 @@ import Sidebar from "../components/Sidebar";
 import AjouterAdherent from "../pages/Membres/AjouterAdherent";
 import AjouterPaiement from "../pages/Paiements/AjouterPaiement";
 import Historique from "../pages/Paiements/Historique";
-import Categories from "../pages/Disciplines/Categories";
+import Groupes from "../pages/Disciplines/Groupes";
+
 
 function AppRoutes() {
   return (
@@ -21,11 +22,12 @@ function AppRoutes() {
             <Route path="/membres" element={<Membres />} />
             <Route path="/evenements" element={<Evenements />} />
             <Route path="/paiements" element={<Paiements />} />
-            <Route path="/disciplines/categories/:id" element={<Categories />} />
+            <Route path="/disciplines/groupes/:id" element={<Groupes />} />
             <Route path="/disciplines" element={<Disciplines />} />
             <Route path="/membres/ajouter-adherent" element={<AjouterAdherent />} /> 
             <Route path="/paiements/ajouter-paiement" element={<AjouterPaiement />} /> 
             <Route path="/paiements/historique/:id" element={<Historique />} />
+            <Route path="/groupes" element={<Groupes />} />
           </Routes>
         </div>
       </div>

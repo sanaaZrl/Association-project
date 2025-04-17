@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { TextField, Button, MenuItem, Box, IconButton } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
@@ -18,7 +19,8 @@ const AjouterAdherent = () => {
     certificatMedical: '',
     dateExamen: '',
     discipline: '',
-    categorie: ''
+    groupe: '',
+    montantRestant: 0
   });
 
   const handleChange = (e) => {
@@ -80,13 +82,48 @@ const theme = createTheme({
         <TextField fullWidth margin="normal" label="Adresse" name="adresse" value={formData.adresse} onChange={handleChange} required />
         <TextField fullWidth margin="normal" label="Email" name="email" type="email" value={formData.email} onChange={handleChange} required />
         <TextField fullWidth margin="normal" label="Téléphone" name="telephone" value={formData.telephone} onChange={handleChange} required />
-        <TextField fullWidth select margin="normal" label="Certificat Médical" name="certificatMedical" value={formData.certificatMedical} onChange={handleChange} required>
-          <MenuItem value="Valide">Valide</MenuItem>
-          <MenuItem value="Invalide">Invalide</MenuItem>
-        </TextField>
+        <TextField
+          fullWidth
+          margin="normal"
+          type="file"
+          label="Certificat Médical"
+          name="certificatMedical"
+          onChange={(e) => {
+            const file = e.target.files[0];
+            if (file) {
+              setFormData({ ...formData, certificatMedical: URL.createObjectURL(file) });
+            }
+          }}
+          InputLabelProps={{ shrink: true }}
+          required
+        />
         <TextField fullWidth margin="normal" label="Date Examen" name="dateExamen" type="date" value={formData.dateExamen} onChange={handleChange} InputLabelProps={{ shrink: true }} required />
         <TextField fullWidth margin="normal" label="Discipline" name="discipline" value={formData.discipline} onChange={handleChange} required />
-        <TextField fullWidth margin="normal" label="Catégorie" name="categorie" value={formData.categorie} onChange={handleChange} required />
+        <TextField 
+          fullWidth 
+          select 
+          margin="normal" 
+          label="Groupe" 
+          name="groupe" 
+          value={formData.groupe} 
+          onChange={handleChange} 
+          required
+        >
+          <MenuItem value="Groupe1">Groupe 1</MenuItem>
+          <MenuItem value="Groupe2">Groupe 2</MenuItem>
+          <MenuItem value="Groupe3">Groupe 3</MenuItem>
+          <MenuItem value="Groupe4">Groupe 4</MenuItem>
+        </TextField>
+        <TextField 
+          fullWidth 
+          margin="normal" 
+          label="Montant restant" 
+          name="montantRestant" 
+          type="number" 
+          value={formData.montantRestant} 
+          onChange={handleChange} 
+          required 
+        />
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
             <ThemeProvider theme={theme}>
                 <Button variant="contained" color="red" onClick={() => navigate('/membres')}>Annuler</Button>
