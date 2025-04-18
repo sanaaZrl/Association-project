@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, TextField, List, ListItem, ListItemText, IconButton, Typography, Box, Card, CardContent, Collapse, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Button, TextField, List, ListItem, ListItemText, IconButton, Typography, Box, Card, CardContent, Collapse, Dialog, DialogTitle, DialogContent, DialogActions, Tooltip, Alert, Snackbar } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useNavigate } from 'react-router-dom';
 import SportsBasketballIcon from '@mui/icons-material/SportsBasketball';
@@ -7,6 +7,8 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
+import GroupAddIcon from '@mui/icons-material/GroupAdd';
+import RemoveIcon from '@mui/icons-material/Remove';
 
 const Disciplines = () => {
     const navigate = useNavigate();
@@ -20,7 +22,9 @@ const Disciplines = () => {
                     nom: 'Groupe 1',
                     membres: [
                         { id: 1, nom: 'El Amrani', prenom: 'Yassine' },
-                        { id: 5, nom: 'Ouazzani', prenom: 'Hamza' }
+                        { id: 5, nom: 'Ouazzani', prenom: 'Hamza' },
+                        { id: 9, nom: 'Rachidi', prenom: 'Sara' },
+                        { id: 13, nom: 'Cherkaoui', prenom: 'Sara' }
                     ]
                 },
                 {
@@ -28,7 +32,28 @@ const Disciplines = () => {
                     nom: 'Groupe 2',
                     membres: [
                         { id: 2, nom: 'Benkirane', prenom: 'Sofia' },
-                        { id: 6, nom: 'Zeroual', prenom: 'Karim' }
+                        { id: 6, nom: 'Zeroual', prenom: 'Karim' },
+                        { id: 10, nom: 'Saidi', prenom: 'Youssef' },
+                        { id: 14, nom: 'El Fassi', prenom: 'Younes' }
+                    ]
+                },
+                {
+                    id: 'Groupe3',
+                    nom: 'Groupe 3',
+                    membres: [
+                        { id: 3, nom: 'Tahiri', prenom: 'Omar' },
+                        { id: 7, nom: 'Bennani', prenom: 'Amina' },
+                        { id: 11, nom: 'Lahlou', prenom: 'Hafsa' },
+                        { id: 15, nom: 'Mourad', prenom: 'Lina' }
+                    ]
+                },
+                {
+                    id: 'Groupe4',
+                    nom: 'Groupe 4',
+                    membres: [
+                        { id: 4, nom: 'Naciri', prenom: 'Leila' },
+                        { id: 8, nom: 'Khalidi', prenom: 'Mehdi' },
+                        { id: 12, nom: 'Bouzidi', prenom: 'Anas' }
                     ]
                 }
             ]
@@ -42,6 +67,12 @@ const Disciplines = () => {
     const [deleteGroup, setDeleteGroup] = useState(null);
     const [newMember, setNewMember] = useState({ id: '', nom: '', prenom: '' });
     const [nouvelleDiscipline, setNouvelleDiscipline] = useState('');
+    const [openAddGroup, setOpenAddGroup] = useState(false);
+    const [selectedDiscipline, setSelectedDiscipline] = useState(null);
+    const [newGroup, setNewGroup] = useState({ nom: '', description: '' });
+    const [openDeleteMemberDialog, setOpenDeleteMemberDialog] = useState(false);
+    const [memberToDelete, setMemberToDelete] = useState(null);
+    const [alert, setAlert] = useState({ open: false, message: '', severity: 'warning' });
 
     const ajouterDiscipline = () => {
         if (nouvelleDiscipline.trim() !== '') {
@@ -54,7 +85,23 @@ const Disciplines = () => {
         }
     };
 
+    const handleCloseAlert = () => {
+        setAlert({ ...alert, open: false });
+    };
+
     const supprimerDiscipline = (id) => {
+        const discipline = disciplines.find(d => d.id === id);
+        const hasMembers = discipline.groupes.some(groupe => groupe.membres.length > 0);
+        
+        if (hasMembers) {
+            setAlert({
+                open: true,
+                message: "Impossible de supprimer cette discipline car elle contient des groupes avec des membres. Veuillez d'abord supprimer tous les membres des groupes.",
+                severity: 'warning'
+            });
+            return;
+        }
+        
         setDisciplines(disciplines.filter(discipline => discipline.id !== id));
     };
 
@@ -107,7 +154,11 @@ const Disciplines = () => {
         const groupe = discipline.groupes.find(g => g.id === groupeId);
         
         if (groupe.membres.length > 0) {
-            alert("Impossible de supprimer ce groupe car il contient des membres. Veuillez d'abord supprimer tous les membres.");
+            setAlert({
+                open: true,
+                message: "Impossible de supprimer ce groupe car il contient des membres. Veuillez d'abord supprimer tous les membres.",
+                severity: 'warning'
+            });
             return;
         }
         setDeleteGroup({ disciplineId, groupeId });
@@ -128,6 +179,63 @@ const Disciplines = () => {
         setDeleteGroup(null);
     };
 
+    const handleAddGroup = (disciplineId) => {
+        setSelectedDiscipline(disciplineId);
+        setOpenAddGroup(true);
+    };
+
+    const handleCloseAddGroup = () => {
+        setOpenAddGroup(false);
+        setNewGroup({ nom: '', description: '' });
+    };
+
+    const handleAddGroupSubmit = () => {
+        if (newGroup.nom.trim()) {
+            setDisciplines(prev => prev.map(discipline => {
+                if (discipline.id === selectedDiscipline) {
+                    return {
+                        ...discipline,
+                        groupes: [...discipline.groupes, {
+                            id: `Groupe${discipline.groupes.length + 1}`,
+                            nom: newGroup.nom,
+                            description: newGroup.description,
+                            membres: []
+                        }]
+                    };
+                }
+                return discipline;
+            }));
+            handleCloseAddGroup();
+        }
+    };
+
+    const handleDeleteMember = (disciplineId, groupeId, memberId) => {
+        setMemberToDelete({ disciplineId, groupeId, memberId });
+        setOpenDeleteMemberDialog(true);
+    };
+
+    const handleConfirmDeleteMember = () => {
+        setDisciplines(prev => prev.map(discipline => {
+            if (discipline.id === memberToDelete.disciplineId) {
+                return {
+                    ...discipline,
+                    groupes: discipline.groupes.map(groupe => {
+                        if (groupe.id === memberToDelete.groupeId) {
+                            return {
+                                ...groupe,
+                                membres: groupe.membres.filter(membre => membre.id !== memberToDelete.memberId)
+                            };
+                        }
+                        return groupe;
+                    })
+                };
+            }
+            return discipline;
+        }));
+        setOpenDeleteMemberDialog(false);
+        setMemberToDelete(null);
+    };
+
     const theme = createTheme({
         palette: {
             blue: {
@@ -135,6 +243,18 @@ const Disciplines = () => {
                 light: '#01569e',
                 dark: '#01569e',
                 contrastText: '#d7f6e7',
+            },
+            blueInverse: {
+                main: '#01569e',
+                light: '#024b95',
+                dark: '#024b95',
+                contrastText: '#024b95',
+            },
+            red: {
+                main: '#dc0005',
+                light: '#ff3d41',
+                dark: '#c80004',
+                contrastText: '#ffffff ',
             },
         },
     });
@@ -169,12 +289,21 @@ const Disciplines = () => {
                                         <Typography variant="h6">{discipline.nom}</Typography>
                                     </Box>
                                     <Box>
-                                        <IconButton onClick={() => handleExpandDiscipline(discipline.id)}>
-                                            <ExpandMoreIcon sx={{ transform: expandedDiscipline === discipline.id ? 'rotate(180deg)' : 'none' }} />
-                                        </IconButton>
-                                        <IconButton color="error" onClick={() => supprimerDiscipline(discipline.id)}>
-                                            <DeleteIcon />
-                                        </IconButton>
+                                        <Tooltip title="Afficher/Masquer les groupes">
+                                            <IconButton onClick={() => handleExpandDiscipline(discipline.id)}>
+                                                <ExpandMoreIcon sx={{ transform: expandedDiscipline === discipline.id ? 'rotate(180deg)' : 'none' }} />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Tooltip title="Ajouter un groupe">
+                                            <IconButton onClick={() => handleAddGroup(discipline.id)}>
+                                                <GroupAddIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Tooltip title="Supprimer la discipline">
+                                            <IconButton color="error" onClick={() => supprimerDiscipline(discipline.id)}>
+                                                <DeleteIcon />
+                                            </IconButton>
+                                        </Tooltip>
                                     </Box>
                                 </Box>
                                 <Collapse in={expandedDiscipline === discipline.id}>
@@ -184,21 +313,29 @@ const Disciplines = () => {
                                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                     <Typography variant="subtitle1">{groupe.nom}</Typography>
                                                     <Box>
-                                                        <IconButton onClick={() => navigate(`/disciplines/planifier-entrainement/${discipline.id}/${groupe.id}`)}>
-                                                            <CalendarMonthIcon />
-                                                        </IconButton>
-                                                        <IconButton onClick={() => handleAddMember(discipline.id, groupe.id)}>
-                                                            <PersonAddAlt1Icon />
-                                                        </IconButton>
-                                                        <IconButton onClick={() => handleDeleteGroup(discipline.id, groupe.id)}>
-                                                            <DeleteIcon />
-                                                        </IconButton>
-                                                        <IconButton
-                                                            onClick={() => handleExpandGroupe(discipline.id, groupe.id)}
-                                                            sx={{ transform: expandedGroupes[`${discipline.id}-${groupe.id}`] ? 'rotate(180deg)' : 'none' }}
-                                                        >
-                                                            <ExpandMoreIcon />
-                                                        </IconButton>
+                                                        <Tooltip title="Planifier un entraînement">
+                                                            <IconButton onClick={() => navigate(`/disciplines/planifier-entrainement/${discipline.id}/${groupe.id}`)}>
+                                                                <CalendarMonthIcon />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                        <Tooltip title="Ajouter un membre">
+                                                            <IconButton onClick={() => handleAddMember(discipline.id, groupe.id)}>
+                                                                <PersonAddAlt1Icon />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                        <Tooltip title="Supprimer le groupe">
+                                                            <IconButton onClick={() => handleDeleteGroup(discipline.id, groupe.id)}>
+                                                                <DeleteIcon />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                        <Tooltip title="Afficher/Masquer les membres">
+                                                            <IconButton
+                                                                onClick={() => handleExpandGroupe(discipline.id, groupe.id)}
+                                                                sx={{ transform: expandedGroupes[`${discipline.id}-${groupe.id}`] ? 'rotate(180deg)' : 'none' }}
+                                                            >
+                                                                <ExpandMoreIcon />
+                                                            </IconButton>
+                                                        </Tooltip>
                                                     </Box>
                                                 </Box>
                                                 <Collapse in={expandedGroupes[`${discipline.id}-${groupe.id}`]}>
@@ -209,6 +346,14 @@ const Disciplines = () => {
                                                                     primary={`${membre.nom} ${membre.prenom}`}
                                                                     secondary={`ID: ${membre.id}`}
                                                                 />
+                                                                <Tooltip title="Supprimer le membre">
+                                                                    <IconButton 
+                                                                        onClick={() => handleDeleteMember(discipline.id, groupe.id, membre.id)}
+                                                                        color="error"
+                                                                    >
+                                                                        <RemoveIcon />
+                                                                    </IconButton>
+                                                                </Tooltip>
                                                             </ListItem>
                                                         ))}
                                                     </List>
@@ -224,7 +369,14 @@ const Disciplines = () => {
 
                 {/* Dialog pour ajouter un membre */}
                 <Dialog open={openAddMember} onClose={handleCloseAddMember}>
-                    <DialogTitle>Ajouter un membre</DialogTitle>
+                    <DialogTitle sx={{ 
+                        boxShadow: 1, 
+                        fontStyle: 'italic', 
+                        fontFamily: 'Serif', 
+                        color: '#024b95'
+                    }}>
+                        Ajouter un membre
+                    </DialogTitle>
                     <DialogContent>
                         <TextField
                             autoFocus
@@ -250,10 +402,14 @@ const Disciplines = () => {
                         />
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={handleCloseAddMember}>Annuler</Button>
-                        <Button onClick={handleAddMemberSubmit} variant="contained" color="primary">
-                            Ajouter
-                        </Button>
+                        <ThemeProvider theme={theme}>
+                            <Button onClick={handleCloseAddMember} color="blueInverse">Annuler</Button>
+                        </ThemeProvider>
+                        <ThemeProvider theme={theme}>
+                            <Button onClick={handleAddMemberSubmit} variant="contained" color="blue">
+                                Ajouter
+                            </Button>
+                        </ThemeProvider>
                     </DialogActions>
                 </Dialog>
 
@@ -264,12 +420,93 @@ const Disciplines = () => {
                         <Typography>Êtes-vous sûr de vouloir supprimer ce groupe ?</Typography>
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={() => setOpenDeleteDialog(false)}>Annuler</Button>
-                        <Button onClick={handleConfirmDelete} color="error" variant="contained">
+                    <ThemeProvider theme={theme}>
+                        <Button onClick={() => setOpenDeleteDialog(false)} color="blueInverse">Annuler</Button>
+                    </ThemeProvider>
+                    <ThemeProvider theme={theme}>
+                        <Button onClick={handleConfirmDelete} color="red" variant="contained">
                             Supprimer
                         </Button>
+                     </ThemeProvider>
                     </DialogActions>
                 </Dialog>
+
+                {/* Dialog pour ajouter un groupe */}
+                <Dialog open={openAddGroup} onClose={handleCloseAddGroup}>
+                    <DialogTitle sx={{ 
+                        boxShadow: 1, 
+                        fontStyle: 'italic', 
+                        fontFamily: 'Serif',
+                        color: '#024b95'
+                    }}>
+                        Ajouter un groupe
+                    </DialogTitle>
+                    <DialogContent>
+                        <TextField
+                            autoFocus
+                            margin="dense"
+                            label="Nom du groupe"
+                            fullWidth
+                            value={newGroup.nom}
+                            onChange={(e) => setNewGroup({ ...newGroup, nom: e.target.value })}
+                        />
+                        <TextField
+                            margin="dense"
+                            label="Description (facultatif)"
+                            fullWidth
+                            multiline
+                            rows={3}
+                            value={newGroup.description}
+                            onChange={(e) => setNewGroup({ ...newGroup, description: e.target.value })}
+                        />
+                    </DialogContent>
+                    <DialogActions>
+                        <ThemeProvider theme={theme}>
+                            <Button onClick={handleCloseAddGroup} color="blueInverse">Annuler</Button>
+                        </ThemeProvider>
+                        <ThemeProvider theme={theme}>
+                            <Button onClick={handleAddGroupSubmit} variant="contained" color="blue">
+                                Ajouter
+                            </Button>
+                        </ThemeProvider>
+                    </DialogActions>
+                </Dialog>
+
+                {/* Dialog pour confirmer la suppression d'un membre */}
+                <Dialog open={openDeleteMemberDialog} onClose={() => setOpenDeleteMemberDialog(false)}>
+                    <DialogTitle>Confirmer la suppression</DialogTitle>
+                    <DialogContent>
+                        <Typography>Êtes-vous sûr de vouloir supprimer ce membre du groupe ?</Typography>
+                    </DialogContent>
+                    <DialogActions>
+                        <ThemeProvider theme={theme}>
+                            <Button onClick={() => setOpenDeleteMemberDialog(false)} color="blueInverse">
+                                Annuler
+                            </Button>
+                        </ThemeProvider>
+                        <ThemeProvider theme={theme}>
+                            <Button onClick={handleConfirmDeleteMember} color="red" variant="contained">
+                                Supprimer
+                            </Button>
+                        </ThemeProvider>
+                    </DialogActions>
+                </Dialog>
+
+                {/* Snackbar pour afficher les alertes */}
+                <Snackbar 
+                    open={alert.open} 
+                    autoHideDuration={6000} 
+                    onClose={handleCloseAlert}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                >
+                    <Alert 
+                        onClose={handleCloseAlert} 
+                        severity={alert.severity}
+                        sx={{ width: '100%' }}
+                    >
+                        {alert.message}
+                    </Alert>
+                </Snackbar>
             </Box>
         </Box>
     );

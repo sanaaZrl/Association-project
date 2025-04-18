@@ -131,7 +131,7 @@ const Paiements = () => {
                   <TableCell>{paiement.abonnement}</TableCell>
                   <TableCell>{paiement.datePaiement}</TableCell>
                   <TableCell>{paiement.dateExpiration}</TableCell>
-                  <TableCell style={{ fontWeight: "bold", color: paiement.actif ? "green" : "gray" }}>
+                  <TableCell style={{ fontWeight: "bold", color: paiement.actif ? "green" : "red" }}>
                     {paiement.actif ? "Actif" : "Inactif"}
                   </TableCell>
                   <TableCell>
@@ -145,7 +145,7 @@ const Paiements = () => {
                     <IconButton color="primary">
                       <EditIcon />
                     </IconButton>
-                    <IconButton color={paiement.actif ? "success" : "default"} onClick={() => handleDesactiver(paiement.id)}>
+                    <IconButton color={paiement.actif ? "success" : "error"} onClick={() => handleDesactiver(paiement.id)}> 
                       <AccessibilityNewIcon />
                     </IconButton>
                     <IconButton color="error" onClick={() => handleSupprimer(paiement.id)}>
