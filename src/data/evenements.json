@@ -1,0 +1,21 @@
+{
+  "evenements": [
+    {
+      "id": 1,
+      "titre": "Tournoi de tennis",
+      "type": "tournoi",
+      "description": "Tournoi amical de tennis pour tous les niveaux",
+      "dateCreation": "2024-03-25T10:00:00",
+      "dateDelivrance": "2024-03-26T10:00:00"
+    },
+    {
+      "id": 2,
+      "titre": "Message important",
+      "type": "message",
+      "description": "Information concernant les horaires d'été",
+      "dateCreation": "2024-03-25T11:00:00",
+      "dateDelivrance": "2024-03-26T11:00:00"
+    }
+  ],
+  "lastId": 2
+} 

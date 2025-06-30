@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
-import { TextField, Button, MenuItem, Box, IconButton, Typography, Paper, Snackbar, Alert } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { TextField, Button, MenuItem, Box, IconButton, Typography, Paper, Switch, FormControlLabel } from '@mui/material';
+import { useNavigate, useParams } from 'react-router-dom';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import membreService from '../../services/membreService';
 
-const AjouterAdherent = () => {
+const ModifierAdherent = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     nom: '',
@@ -18,12 +19,32 @@ const AjouterAdherent = () => {
     telephone: '',
     certificatMedical: '',
     dateExamen: '',
-    discipline: '',
+    discipline: 'Basketball',
     groupe: '',
     montantRestant: 0,
     actif: true
   });
   const [showSuccessCard, setShowSuccessCard] = useState(false);
+
+  useEffect(() => {
+    const loadMembre = () => {
+      try {
+        const membre = membreService.getAllMembres().find(m => m.id === parseInt(id));
+        if (membre) {
+          setFormData(membre);
+        } else {
+          alert('Membre non trouvé');
+          navigate('/membres');
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement du membre:', error);
+        alert('Une erreur est survenue lors du chargement du membre');
+        navigate('/membres');
+      }
+    };
+
+    loadMembre();
+  }, [id, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -38,7 +59,7 @@ const AjouterAdherent = () => {
     
     try {
       // Vérifier que tous les champs requis sont remplis
-      const requiredFields = ['nom', 'prenom', 'sexe', 'dateNaissance', 'adresse', 'email', 'telephone', 'dateExamen', 'discipline', 'groupe'];
+      const requiredFields = ['nom', 'prenom', 'sexe', 'dateNaissance', 'adresse', 'email', 'telephone', 'certificatMedical', 'dateExamen', 'discipline', 'groupe'];
       const missingFields = requiredFields.filter(field => !formData[field]);
       
       if (missingFields.length > 0) {
@@ -46,9 +67,9 @@ const AjouterAdherent = () => {
         return;
       }
 
-      // Ajouter le nouveau membre via le service
-      const newMembre = membreService.addMembre(formData);
-      console.log('Nouveau membre ajouté:', newMembre);
+      // Mettre à jour le membre via le service
+      const updatedMembre = membreService.updateMembre(parseInt(id), formData);
+      console.log('Membre mis à jour:', updatedMembre);
       
       // Afficher le message de succès
       setShowSuccessCard(true);
@@ -58,8 +79,8 @@ const AjouterAdherent = () => {
         navigate('/membres');
       }, 2000);
     } catch (error) {
-      console.error('Erreur lors de l\'ajout du membre:', error);
-      alert('Une erreur est survenue lors de l\'ajout du membre. Veuillez réessayer.');
+      console.error('Erreur lors de la modification du membre:', error);
+      alert('Une erreur est survenue lors de la modification du membre. Veuillez réessayer.');
     }
   };
 
@@ -108,7 +129,7 @@ const AjouterAdherent = () => {
         >
           <CheckCircleIcon sx={{ fontSize: 30 }} />
           <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-            L'adhérent {formData.nom} {formData.prenom} est ajouté avec succès
+            L'adhérent {formData.nom} {formData.prenom} est modifié avec succès
           </Typography>
         </Paper>
       )}
@@ -126,7 +147,7 @@ const AjouterAdherent = () => {
         letterSpacing: '3px',
         textShadow: '2px 4px 3px rgba(0,0,0,0.3)' 
       }}>
-        Ajouter un adhérent
+        Modifier un adhérent
       </h2>
       <form onSubmit={handleSubmit}>
         <TextField fullWidth margin="normal" label="Nom" name="nom" value={formData.nom} onChange={handleChange} required />
@@ -139,21 +160,75 @@ const AjouterAdherent = () => {
         <TextField fullWidth margin="normal" label="Adresse" name="adresse" value={formData.adresse} onChange={handleChange} required />
         <TextField fullWidth margin="normal" label="Email" name="email" type="email" value={formData.email} onChange={handleChange} required />
         <TextField fullWidth margin="normal" label="Téléphone" name="telephone" value={formData.telephone} onChange={handleChange} required />
-        <TextField
-          fullWidth
-          margin="normal"
-          type="file"
-          label="Certificat Médical"
-          name="certificatMedical"
-          onChange={(e) => {
-            const file = e.target.files[0];
-            if (file) {
-              setFormData({ ...formData, certificatMedical: URL.createObjectURL(file) });
-            }
-          }}
-          InputLabelProps={{ shrink: true }}
-          required
-        />
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="subtitle1" sx={{ mb: 1, color: '#003a68' }}>
+            Certificat Médical
+          </Typography>
+          {formData.certificatMedical ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Typography variant="body1">
+                  Certificat actuel
+                </Typography>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => window.open(formData.certificatMedical, '_blank')}
+                  sx={{ 
+                    color: '#003a68',
+                    borderColor: '#003a68',
+                    '&:hover': {
+                      borderColor: '#002b4d',
+                      bgcolor: 'rgba(0, 58, 104, 0.1)'
+                    }
+                  }}
+                >
+                  Voir le certificat
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'application/pdf,image/*';
+                    input.onchange = (e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        setFormData({ ...formData, certificatMedical: URL.createObjectURL(file) });
+                      }
+                    };
+                    input.click();
+                  }}
+                  sx={{ 
+                    color: '#003a68',
+                    borderColor: '#003a68',
+                    '&:hover': {
+                      borderColor: '#002b4d',
+                      bgcolor: 'rgba(0, 58, 104, 0.1)'
+                    }
+                  }}
+                >
+                  Changer le certificat
+                </Button>
+              </Box>
+            </Box>
+          ) : (
+            <TextField
+              fullWidth
+              type="file"
+              name="certificatMedical"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (file) {
+                  setFormData({ ...formData, certificatMedical: URL.createObjectURL(file) });
+                }
+              }}
+              InputLabelProps={{ shrink: true }}
+              required
+            />
+          )}
+        </Box>
         <TextField fullWidth margin="normal" label="Date Examen" name="dateExamen" type="date" value={formData.dateExamen} onChange={handleChange} InputLabelProps={{ shrink: true }} required />
         <TextField 
           fullWidth 
@@ -192,17 +267,32 @@ const AjouterAdherent = () => {
           onChange={handleChange} 
           required 
         />
+        <FormControlLabel
+          control={
+            <Switch
+              checked={formData.actif}
+              onChange={(e) => setFormData({ ...formData, actif: e.target.checked })}
+              color="primary"
+            />
+          }
+          label={
+            <Typography sx={{ color: formData.actif ? '#4caf50' : '#f44336' }}>
+              {formData.actif ? 'Actif' : 'Inactif'}
+            </Typography>
+          }
+          sx={{ mt: 2 }}
+        />
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-            <ThemeProvider theme={theme}>
-                <Button variant="contained" color="red" onClick={() => navigate('/membres')}>Annuler</Button>
-            </ThemeProvider>
-            <ThemeProvider theme={theme}>
-                <Button variant="contained" color="blue" type="submit">Ajouter</Button>
-             </ThemeProvider>
+          <ThemeProvider theme={theme}>
+            <Button variant="contained" color="red" onClick={() => navigate('/membres')}>Annuler</Button>
+          </ThemeProvider>
+          <ThemeProvider theme={theme}>
+            <Button variant="contained" color="blue" type="submit">Modifier</Button>
+          </ThemeProvider>
         </Box>
       </form>
     </Box>
   );
 };
 
-export default AjouterAdherent;
+export default ModifierAdherent; 
